@@ -27,12 +27,26 @@ int test_sp48(void) {
 
 
 int test_sp48_inv(void){
+	// A CHANGER
+	return EXIT_SUCCESS;
+}
+
+int test_cs48_dm(void) {
+	// A CHANGER
+	uint64_t h = 0x010203040506ULL;
+	uint32_t m[4] = {
+		0x0, 0x1, 0x2, 0x3
+	};
+	printf("%lx|n", cs48_dm(m ,h));
 	return EXIT_SUCCESS;
 }
 
 
+
 int main () {
 	test_sp48();
-	printf("ok\n");
+	test_sp48_inv();
+	test_cs48_dm();
+	printf("\nok\n");
 	return 0;
 }

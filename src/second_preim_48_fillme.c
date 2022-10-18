@@ -106,7 +106,7 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 	{
 		h = cs48_dm(mp, h);
 		if (verbose)
-			printf("@%llu : %06X %06X %06X %06X => %06llX\n", i, mp[0], mp[1], mp[2], mp[3], h);
+			printf("@%lu : %06X %06X %06X %06X => %06lX\n", i, mp[0], mp[1], mp[2], mp[3], h);
 		mp += 4;
 	}
 	if (padding)
@@ -118,7 +118,7 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 		pad[3] = 0;
 		h = cs48_dm(pad, h);
 		if (verbose)
-			printf("@%llu : %06X %06X %06X %06X => %06llX\n", fourlen, pad[0], pad[1], pad[2], pad[3], h);
+			printf("@%lu : %06X %06X %06X %06X => %06lX\n", fourlen, pad[0], pad[1], pad[2], pad[3], h);
 	}
 
 	return h;
@@ -148,16 +148,4 @@ void attack(void)
 {
 	/* FILL ME */
 }
-
-int main()
-{
-	//attack();
-	uint64_t h = 0x010203040506ULL;
-	uint32_t m[4] = {
-		0x0, 0x1, 0x2, 0x3
-	};
-	printf("%lx|n", cs48_dm(m ,h));
-	return 0;
-}
-
 

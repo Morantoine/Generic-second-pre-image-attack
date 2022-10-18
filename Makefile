@@ -1,15 +1,16 @@
 FLAGS = -Wall -Wextra -pedantic -lm
+#FLAGS = -lm
 
 EXEC_TEST = test
 EXEC_ATTACK = attack
 
 all : $(EXEC_TEST)
 
-run : $(EXEC_TEST)
-run : ;./test
+test_run : $(EXEC_TEST)
+test_run : ;./test
 
-attack : $(EXEC_ATTACK)
-attack : ;./attack
+attack_run : $(EXEC_ATTACK)
+attack_run : ;./attack
 
 $(EXEC_ATTACK) :
 	gcc $(FLAGS) -o $(EXEC_ATTACK) src/attack.c src/second_preim_48_fillme.c
