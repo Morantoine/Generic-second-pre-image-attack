@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <assert.h>
 #include <math.h>
 
 #define ROTL24_16(x) ((((x) << 16) ^ ((x) >> 8)) & 0xFFFFFF)
@@ -43,6 +44,27 @@ void speck48_96(const uint32_t k[4], const uint32_t p[2], uint32_t c[2])
 	}
 
 	return;
+}
+
+/*
+ * test of the speck48_96
+ */
+int test_sp48(void) {
+	const uint32_t k[4] = {
+		0x020100,
+		0x0a0908,
+		0x121110,
+		0x1a1918,
+	};
+	const uint32_t p[2] = {
+		0x6d2073,
+		0x696874,
+	};
+	uint32_t c[2] = {0};
+	speck48_96(k, p, c);
+	/*printf("%x %x\n", c[1], c[0]);*/
+	assert(c[0] == 0x735e10 && c[1] == 0xb6445d);
+	return EXIT_SUCCESS;
 }
 
 /* the inverse cipher */
@@ -140,22 +162,6 @@ void attack(void)
 int main()
 {
 	//attack();
-	// Create arrays
-	uint32_t k[4] = {
-		0x020100,
-		0x0a0908,
-		0x121110,
-		0x1a1918
-	};
-	uint32_t p[2] = {
-		0x6d2073,
-		0x696874
-	};
-	uint32_t c[2] = {0};
-	speck48_96(k, p, c);
-	speck48_96_inv(k, c, p);
-	printf("%x\n", p[0]);
-	printf("%x\n", p[1]);
-	// Initialize arrays
+	test_sp48();
 	return 0;
 }
