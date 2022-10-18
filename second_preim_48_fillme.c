@@ -107,7 +107,11 @@ void speck48_96_inv(const uint32_t k[4], const uint32_t c[2], uint32_t p[2])
  */
 uint64_t cs48_dm(const uint32_t m[4], const uint64_t h)
 {
-	/* FILL ME */
+	uint32_t hashed_tab[2] = {0};
+	uint32_t h_tab[2] = {h & 0xFFFFFF, h >> 24 & 0xFFFFFF};
+	speck48_96(m, h_tab, hashed_tab);		
+	uint64_t hashed = ((uint64_t) hashed_tab[1]) << 24 | (uint64_t) hashed_tab[0];
+	return hashed ^ h;
 }
 
 /* assumes message length is fourlen * four blocks of 24 bits, each stored as the low bits of 32-bit words
@@ -162,6 +166,11 @@ void attack(void)
 int main()
 {
 	//attack();
+	uint64_t h = 0x010203040506ULL;
+	uint32_t m[4] = {
+		0x0, 0x1, 0x2, 0x3
+	};
+	printf("%lx\n", cs48_dm(m ,h));
 	test_sp48();
 	return 0;
 }
