@@ -1,4 +1,8 @@
-#include "../include/second_preim_48_fillme.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <assert.h>
+#include <math.h>
 
 #define ROTL24_16(x) ((((x) << 16) ^ ((x) >> 8)) & 0xFFFFFF)
 #define ROTL24_3(x) ((((x) << 3) ^ ((x) >> 21)) & 0xFFFFFF)
@@ -46,7 +50,33 @@ void speck48_96(const uint32_t k[4], const uint32_t p[2], uint32_t c[2])
 /* the inverse cipher */
 void speck48_96_inv(const uint32_t k[4], const uint32_t c[2], uint32_t p[2])
 {
+	uint32_t rk[23];
+	uint32_t ell[3] = {k[1], k[2], k[3]};
+	uint32_t buff;
 
+	rk[0] = k[0];
+
+	p[0] = c[0];
+	p[1] = c[1];
+
+	/* full key schedule */
+	for (unsigned i = 0; i < 22; i++)
+	{
+		uint32_t new_ell = ((ROTL24_16(ell[0]) + rk[i]) ^ i) & 0xFFFFFF; // addition (+) is done mod 2**24
+		rk[i+1] = ROTL24_3(rk[i]) ^ new_ell;
+		ell[0] = ell[1];
+		ell[1] = ell[2];
+		ell[2] = new_ell;
+	}
+	
+	for (int i = 22; i >= 0; i--)
+	{
+		buff = p[0];
+		p[0] = ROTL24_8(((p[0] ^ rk[i]) - ROTL24_21(p[0] ^ p[1])) & 0xFFFFFF);
+		p[1] = ROTL24_21(buff ^ p[1]);
+	}
+
+	return;
 }
 
 /* The Davies-Meyer compression function based on speck48_96,
@@ -57,7 +87,11 @@ void speck48_96_inv(const uint32_t k[4], const uint32_t c[2], uint32_t p[2])
  */
 uint64_t cs48_dm(const uint32_t m[4], const uint64_t h)
 {
-	/* FILL ME */
+	uint32_t hashed_tab[2] = {0};
+	uint32_t h_tab[2] = {h & 0xFFFFFF, h >> 24 & 0xFFFFFF};
+	speck48_96(m, h_tab, hashed_tab);		
+	uint64_t hashed = ((uint64_t) hashed_tab[1]) << 24 | (uint64_t) hashed_tab[0];
+	return hashed ^ h;
 }
 
 /* assumes message length is fourlen * four blocks of 24 bits, each stored as the low bits of 32-bit words
@@ -93,7 +127,13 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 /* Computes the unique fixed-point for cs48_dm for the message m */
 uint64_t get_cs48_dm_fp(uint32_t m[4])
 {
-	/* FILL ME */
+	// We just need to compute the preimage of 0 by the block cypher
+	uint32_t c[2] = {0};
+	uint32_t p[2];
+
+	speck48_96_inv(m, c, p);
+	uint64_t formatted_result = ((uint64_t) p[1]) << 24 | (uint64_t) p[0];
+	return formatted_result;
 }
 
 /* Finds a two-block expandable message for hs48, using a fixed-point
@@ -108,3 +148,16 @@ void attack(void)
 {
 	/* FILL ME */
 }
+
+int main()
+{
+	//attack();
+	uint64_t h = 0x010203040506ULL;
+	uint32_t m[4] = {
+		0x0, 0x1, 0x2, 0x3
+	};
+	printf("%lx|n", cs48_dm(m ,h));
+	return 0;
+}
+
+
