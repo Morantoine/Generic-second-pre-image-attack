@@ -38,7 +38,8 @@ void speck48_96(const uint32_t k[4], const uint32_t p[2], uint32_t c[2])
 
 	for (unsigned i = 0; i < 23; i++)
 	{
-		/* FILL ME */
+		c[0] = ((ROTL24_16(c[0]) + c[1]) ^ rk[i]) & 0xFFFFFF;
+		c[1] = ROTL24_3(c[1]) ^ c[0];
 	}
 
 	return;
@@ -112,7 +113,22 @@ void attack(void)
 
 int main()
 {
-	attack();
-
+	//attack();
+	// Create arrays
+	uint32_t k[4] = {
+		0x020100,
+		0x0a0908,
+		0x121110,
+		0x1a1918
+	};
+	uint32_t p[2] = {
+		0x6d2073,
+		0x696874
+	};
+	uint32_t c[2] = {0};
+	speck48_96(k, p, c);
+	printf("%x\n", c[0]);
+	printf("%x\n", c[1]);
+	// Initialize arrays
 	return 0;
 }
