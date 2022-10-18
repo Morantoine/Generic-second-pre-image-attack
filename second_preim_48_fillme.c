@@ -147,7 +147,13 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 /* Computes the unique fixed-point for cs48_dm for the message m */
 uint64_t get_cs48_dm_fp(uint32_t m[4])
 {
-	/* FILL ME */
+	// We just need to compute the preimage of 0 by the block cypher
+	uint32_t c[2] = {0};
+	uint32_t p[2];
+
+	speck48_96_inv(m, c, p);
+	uint64_t formatted_result = ((uint64_t) p[1]) << 24 | (uint64_t) p[0];
+	return formatted_result;
 }
 
 /* Finds a two-block expandable message for hs48, using a fixed-point
@@ -170,7 +176,7 @@ int main()
 	uint32_t m[4] = {
 		0x0, 0x1, 0x2, 0x3
 	};
-	printf("%lx\n", cs48_dm(m ,h));
+	printf("%lx|n", cs48_dm(m ,h));
 	test_sp48();
 	return 0;
 }
