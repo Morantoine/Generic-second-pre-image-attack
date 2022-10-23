@@ -174,9 +174,9 @@ int main()
 	//attack();
 	uint64_t h = 0x010203040506ULL;
 	uint32_t m[4] = {
-		0x0, 0x1, 0x2, 0x3
+		0x3, 0x2, 0x1, 0x0
 	};
-	printf("%lx|n", cs48_dm(m ,h));
+	printf("%lx\n", cs48_dm(m ,h));
 	test_sp48();
 	return 0;
 }
