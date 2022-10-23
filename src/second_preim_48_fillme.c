@@ -149,7 +149,6 @@ void attack(void)
 	/* FILL ME */
 }
 
-<<<<<<< HEAD:second_preim_48_fillme.c
 int main()
 {
 	//attack();
@@ -161,5 +160,3 @@ int main()
 	test_sp48();
 	return 0;
 }
-=======
->>>>>>> origin/develop:src/second_preim_48_fillme.c
