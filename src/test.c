@@ -86,15 +86,12 @@ int test_sp48_inv(void){
 }
 
 int test_cs48_dm(void) {
-	// A CHANGER
 	uint64_t h = 0x010203040506ULL;
 	uint32_t m[4] = {
-		0, 1, 2, 3
+		3, 2, 1, 0
 	};
 
 	uint64_t compression= cs48_dm(m, h);
-	/*printf("%lx\n", compression);*/
-	/*assert(compression == 0x5DFD97183F91ULL);*/
 	if (compression == 0x5DFD97183F91ULL) {
 		ok_test();
 		printf(__func__);
@@ -107,11 +104,32 @@ int test_cs48_dm(void) {
 	}
 }
 
+int test_fixed_point(void) {
+	uint32_t m[4] = {
+		1, 2, 3, 4
+	};
+	// Compute the supposed fixed point
+	uint64_t fp_to_check = get_cs48_dm_fp(m);
+	// Check that it's correct
+	uint64_t compression_result = cs48_dm(m, fp_to_check);
+	if (fp_to_check == compression_result) {
+		ok_test();
+		printf(__func__);
+		return EXIT_SUCCESS;
+	} else {
+		failed_test();
+		printf(__func__);
+		printf("\n%lx\n is not equal to %lx\n", fp_to_check, compression_result);
+		return EXIT_FAILURE;
+	}
+}
+
 
 int main () {
 	test_sp48();
 	test_sp48_inv();
 	test_cs48_dm();
+	test_fixed_point();
 
 	printf("\n");
 	return 0;
