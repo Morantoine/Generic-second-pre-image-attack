@@ -46,26 +46,6 @@ void speck48_96(const uint32_t k[4], const uint32_t p[2], uint32_t c[2])
 	return;
 }
 
-/*
- * test of the speck48_96
- */
-int test_sp48(void) {
-	const uint32_t k[4] = {
-		0x020100,
-		0x0a0908,
-		0x121110,
-		0x1a1918,
-	};
-	const uint32_t p[2] = {
-		0x6d2073,
-		0x696874,
-	};
-	uint32_t c[2] = {0};
-	speck48_96(k, p, c);
-	/*printf("%x %x\n", c[1], c[0]);*/
-	assert(c[0] == 0x735e10 && c[1] == 0xb6445d);
-	return EXIT_SUCCESS;
-}
 
 /* the inverse cipher */
 void speck48_96_inv(const uint32_t k[4], const uint32_t c[2], uint32_t p[2])
@@ -126,7 +106,7 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 	{
 		h = cs48_dm(mp, h);
 		if (verbose)
-			printf("@%llu : %06X %06X %06X %06X => %06llX\n", i, mp[0], mp[1], mp[2], mp[3], h);
+			printf("@%lu : %06X %06X %06X %06X => %06lX\n", i, mp[0], mp[1], mp[2], mp[3], h);
 		mp += 4;
 	}
 	if (padding)
@@ -138,7 +118,7 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 		pad[3] = 0;
 		h = cs48_dm(pad, h);
 		if (verbose)
-			printf("@%llu : %06X %06X %06X %06X => %06llX\n", fourlen, pad[0], pad[1], pad[2], pad[3], h);
+			printf("@%lu : %06X %06X %06X %06X => %06lX\n", fourlen, pad[0], pad[1], pad[2], pad[3], h);
 	}
 
 	return h;
@@ -169,6 +149,7 @@ void attack(void)
 	/* FILL ME */
 }
 
+<<<<<<< HEAD:second_preim_48_fillme.c
 int main()
 {
 	//attack();
@@ -180,3 +161,5 @@ int main()
 	test_sp48();
 	return 0;
 }
+=======
+>>>>>>> origin/develop:src/second_preim_48_fillme.c

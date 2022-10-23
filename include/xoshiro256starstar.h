@@ -174,4 +174,5 @@ void xoshiro256starstar_random_set(uint64_t seed[4])
 {
 	__my_little_xoshiro256starstar_initialization(seed);
 }
+
 #endif
