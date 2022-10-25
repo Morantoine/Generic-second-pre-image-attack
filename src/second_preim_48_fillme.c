@@ -157,27 +157,15 @@ void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
 	// N = sqrt(2^48) = 2^24 car on veut une collision sur 48 bits.
 	// Avec le paradoxe des anniversaires, on peut faire une attaque "meet on the middle search"
 	// et avoir 1 chance sur 2 de trouver une collision avec sqrt(nombre de possibilitées)
-	uint32_t N = 16777216;
 	// compute N possible chaining values for N random first-block messages m1
 	for (uint32_t i ; i < N; i++) {
 		/*xoshiro256starstar_random_set(m1_64_tmp);*/
 		m1_64_tmp[0] = xoshiro256starstar_random();
 		m1_64_tmp[1] = xoshiro256starstar_random();
-		m1_64_tmp[2] = xoshiro256starstar_random();
-		m1_64_tmp[3] = xoshiro256starstar_random();
-		printf("%lu\n", m1_64_tmp[0]);
-		printf("%lu\n", m1_64_tmp[1]);
-		printf("%lu\n", m1_64_tmp[2]);
-		printf("%lu\n", m1_64_tmp[3]);
-
 		m1_32_tmp[0] = m1_64_tmp[0] & 0xffffffff;
-		m1_32_tmp[1] = m1_64_tmp[1] & 0xffffffff;
-		m1_32_tmp[2] = m1_64_tmp[2] & 0xffffffff;
-		m1_32_tmp[3] = m1_64_tmp[3] & 0xffffffff;
-		printf("\n%u\n", m1_32_tmp[0]);
-		printf("%u\n", m1_32_tmp[1]);
-		printf("%u\n", m1_32_tmp[2]);
-		printf("%u\n\n\n", m1_32_tmp[3]);
+		m1_32_tmp[1] = m1_64_tmp[0] & 0xffffffff;
+		m1_32_tmp[2] = m1_64_tmp[1] & 0xffffffff00000000;
+		m1_32_tmp[3] = m1_64_tmp[1] & 0xffffffff00000000;
 
 		// saved in a hash-map
 		cs48_dm(m1, IV);
