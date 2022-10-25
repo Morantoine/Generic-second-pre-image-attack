@@ -124,6 +124,22 @@ int test_fixed_point(void) {
 	}
 }
 
+int test_em(void) {
+	/*
+	if (cs48_dm(m1, IV) == get_cs48_dm_fp(m2)) {
+
+		ok_test();
+		printf(__func__);
+	} else {
+
+	}
+	*/
+	failed_test();
+	printf(__func__);
+	printf("\nnot yet implemented\n");
+	return EXIT_FAILURE;
+}
+
 
 int main () {
 	test_sp48();

@@ -6,10 +6,11 @@ EXEC_ATTACK = attack_exec
 
 all : $(EXEC_TEST)
 
-test : clean
+test : clean_test
 test : $(EXEC_TEST)
 test : ;./$(EXEC_TEST)
 
+attack : clean_attack
 attack : $(EXEC_ATTACK)
 attack : ;./$(EXEC_ATTACK)
 

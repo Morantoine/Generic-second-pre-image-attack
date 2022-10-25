@@ -4,13 +4,16 @@
 #include <assert.h>
 #include <math.h>
 
+#include "../include/second_preim_48_fillme.h"
+#include "../include/xoshiro256starstar.h"
+
 #define ROTL24_16(x) ((((x) << 16) ^ ((x) >> 8)) & 0xFFFFFF)
 #define ROTL24_3(x) ((((x) << 3) ^ ((x) >> 21)) & 0xFFFFFF)
 
 #define ROTL24_8(x) ((((x) << 8) ^ ((x) >> 16)) & 0xFFFFFF)
 #define ROTL24_21(x) ((((x) << 21) ^ ((x) >> 3)) & 0xFFFFFF)
 
-#define IV 0x010203040506ULL 
+#define IV 0x010203040506ULL
 
 /*
  * the 96-bit key is stored in four 24-bit chunks in the low bits of k[0]...k[3]
@@ -141,7 +144,37 @@ uint64_t get_cs48_dm_fp(uint32_t m[4])
  * where hs48_nopad is hs48 with no padding */
 void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
 {
-	/* FILL ME */
+	uint64_t m1_64_tmp[4];
+	uint32_t m1_32_tmp[4];
+	// N = sqrt(2^48) = 2^24 car on veut une collision sur 48 bits.
+	// Avec le paradoxe des anniversaires, on peut faire une attaque "meet on the middle search"
+	// et avoir 1 chance sur 2 de trouver une collision avec sqrt(nombre de possibilitées)
+	uint32_t N = 16777216;
+	// compute N possible chaining values for N random first-block messages m1
+	for (uint32_t i ; i < N; i++) {
+		/*xoshiro256starstar_random_set(m1_64_tmp);*/
+		m1_64_tmp[0] = xoshiro256starstar_random();
+		m1_64_tmp[1] = xoshiro256starstar_random();
+		m1_64_tmp[2] = xoshiro256starstar_random();
+		m1_64_tmp[3] = xoshiro256starstar_random();
+		printf("%lu\n", m1_64_tmp[0]);
+		printf("%lu\n", m1_64_tmp[1]);
+		printf("%lu\n", m1_64_tmp[2]);
+		printf("%lu\n", m1_64_tmp[3]);
+
+		m1_32_tmp[0] = m1_64_tmp[0] & 0xffffffff;
+		m1_32_tmp[1] = m1_64_tmp[1] & 0xffffffff;
+		m1_32_tmp[2] = m1_64_tmp[2] & 0xffffffff;
+		m1_32_tmp[3] = m1_64_tmp[3] & 0xffffffff;
+		printf("\n%u\n", m1_32_tmp[0]);
+		printf("%u\n", m1_32_tmp[1]);
+		printf("%u\n", m1_32_tmp[2]);
+		printf("%u\n\n\n", m1_32_tmp[3]);
+
+		// saved in a hash-map
+		cs48_dm(m1, IV);
+
+	}
 }
 
 void attack(void)
