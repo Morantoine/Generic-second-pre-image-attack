@@ -7,12 +7,19 @@ EXEC_ATTACK = attack_exec
 all : $(EXEC_TEST)
 
 test : clean_test
+test : FLAGS += -O3 -march=native
 test : $(EXEC_TEST)
 test : ;./$(EXEC_TEST)
 
 attack : clean_attack
+attack : FLAGS += -O3 -march=native
 attack : $(EXEC_ATTACK)
 attack : ;./$(EXEC_ATTACK)
+
+gprof : clean_attack
+gprof : FLAGS += -pg
+gprof : $(EXEC_ATTACK)
+gprof : ./$(EXEC_ATTACK)
 
 $(EXEC_ATTACK) :
 	gcc $(FLAGS) -o $(EXEC_ATTACK) src/attack.c src/second_preim_48_fillme.c

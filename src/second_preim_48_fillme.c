@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <assert.h>
 #include <math.h>
 #include <string.h>
+#include <sys/types.h>
+#include <time.h>
 
 #include "../include/second_preim_48_fillme.h"
 #include "../include/xoshiro256starstar.h"
@@ -13,14 +16,21 @@
 
 #define ROTL24_8(x) ((((x) << 8) ^ ((x) >> 16)) & 0xFFFFFF)
 #define ROTL24_21(x) ((((x) << 21) ^ ((x) >> 3)) & 0xFFFFFF)
-#define N 2 >> 24
 
 #define IV 0x010203040506ULL
+// N = sqrt(2^48) = 2^24 car on veut une collision sur 48 bits.
+// Avec le paradoxe des anniversaires, on peut faire une attaque "meet on the middle search"
+// et avoir 1 chance sur 2 de trouver une collision avec sqrt(nombre de possibilitées)
+/*#define N 16777216*/
+#define N 16777216
+#define N 16777216
 
-struct message_clef {
-	uint32_t message[4];
+unsigned long long boucles = 0;
+
+typedef struct key_message {
 	uint64_t hash;
-};
+	uint32_t message[4];
+}KeyMessage;
 
 /*
  * the 96-bit key is stored in four 24-bit chunks in the low bits of k[0]...k[3]
@@ -147,19 +157,78 @@ uint64_t get_cs48_dm_fp(uint32_t m[4])
 	return formatted_result;
 }
 
+static int compar(const void* a, const void* b) {
+	return ((KeyMessage*)a)->hash > ((KeyMessage*)b)->hash;
+}
+
+int64_t find(uint64_t elem, KeyMessage tab[]) {
+    int left_index = 0, right_index = N - 1;
+    int index;
+    while (left_index < right_index) {
+		boucles++;
+        index = left_index - ((left_index - right_index) >> 1); 
+        if (tab[index].hash == elem)
+            return index;
+        if (tab[index].hash < elem) {
+            left_index = index + 1;
+		} else {
+            right_index = index - 1;
+		}
+    }
+    return -1;
+}
+
+uint64_t positive(uint64_t a) {
+	return a * (a > 0);
+}
+
+uint64_t major(uint64_t a, uint64_t majorant) {
+	if (a > majorant) {
+		return majorant;
+	} else {
+		return a;
+	}
+}
+
+int64_t find_opti(uint64_t elem, KeyMessage tab[]) {
+	uint64_t mean = elem / N;
+	/*printf("%lu ===== %lu ====== %lu\n", elem, tab[mean].hash, mean);*/
+    /*uint64_t left_index = positive(mean - N / 4) , right_index = major(mean + N / 4, N - 1);*/
+    uint64_t left_index = 0 , right_index = N - 1;
+    uint64_t index;
+    while (left_index < right_index) {
+		boucles++;
+        index = left_index - ((left_index - right_index) >> 1); 
+        if (tab[index].hash == elem)
+            return index;
+        if (tab[index].hash < elem) {
+            left_index = index + 1;
+		} else {
+            right_index = index - 1;
+		}
+    }
+    return -1;
+}
+
+
+
 /* Finds a two-block expandable message for hs48, using a fixed-point
  * That is, computes m1, m2 s.t. hs48_nopad(m1||m2) = hs48_nopad(m1||m2^*),
  * where hs48_nopad is hs48 with no padding */
 void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
 {
-	uint64_t m1_64_tmp[4];
+	KeyMessage* tab_m1;
+	printf("___________Allocation_________\n");
+	if (!(tab_m1 = malloc(N * sizeof(KeyMessage)))) {
+		fprintf(stderr, "Error: calloc");
+		return;
+	}
+	uint64_t m1_64_tmp[2];
 	uint32_t m1_32_tmp[4];
-	// N = sqrt(2^48) = 2^24 car on veut une collision sur 48 bits.
-	// Avec le paradoxe des anniversaires, on peut faire une attaque "meet on the middle search"
-	// et avoir 1 chance sur 2 de trouver une collision avec sqrt(nombre de possibilitées)
 	// compute N possible chaining values for N random first-block messages m1
-	for (uint32_t i ; i < N; i++) {
-		/*xoshiro256starstar_random_set(m1_64_tmp);*/
+	uint32_t i;
+	printf("___________On calcule 2^24 hashes_________\n");
+	for (i = 0; i < N; i++) {
 		m1_64_tmp[0] = xoshiro256starstar_random();
 		m1_64_tmp[1] = xoshiro256starstar_random();
 		m1_32_tmp[0] = m1_64_tmp[0] & 0xffffffff;
@@ -168,12 +237,49 @@ void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
 		m1_32_tmp[3] = m1_64_tmp[1] & 0xffffffff00000000;
 
 		// saved in a hash-map
-		cs48_dm(m1, IV);
+		tab_m1[i].hash =  cs48_dm(m1_32_tmp, IV);
+		tab_m1[i].message[0] = m1_32_tmp[0];
+		tab_m1[i].message[1] = m1_32_tmp[1];
+		tab_m1[i].message[2] = m1_32_tmp[2];
+		tab_m1[i].message[3] = m1_32_tmp[3];
+		/*printf("%lu\n", tab_m1[i].hash);*/
 
+		/*printf("%lu\n", tab_m1[i].hash);*/
+		/*printf("%u\n\n", tab_m1[i].message[0]);*/
 	}
+	printf("\n______________Tri des 2^24 éléments_________________\n");
+	qsort(tab_m1, N, sizeof(KeyMessage), compar);
+	printf("\n______________Recherche collision_________________\n");
+	
+
+	clock_t start = clock();
+	i = 0;
+	uint64_t elem64[2];
+	uint32_t elem[4];
+	do {
+		elem64[0] = xoshiro256starstar_random();
+		elem64[1] = xoshiro256starstar_random();
+		elem[0] = elem64[0] & 0xffffffff;
+		elem[1] = elem64[1] & 0xffffffff;
+		elem[2] = elem64[0] & 0xffffffff00000000;
+		elem[3] = elem64[1] & 0xffffffff00000000;
+		i++;
+		/*printf("%lu en %u itérations\n", elem, i);*/
+	} while (find(get_cs48_dm_fp(elem), tab_m1) == -1);
+	uint64_t collision = get_cs48_dm_fp(elem);
+	printf("%lu en %u itérations\n", collision, i);
+	printf("%lu à la position %ld \n", tab_m1[find(collision, tab_m1)].hash, find(collision, tab_m1));
+	printf("Nombre de boucles moyen = %llu \n", boucles / i);
+	printf("%f s\n", (clock() - start) / (double)CLOCKS_PER_SEC);
+
+	free(tab_m1);
 }
+
+
 
 void attack(void)
 {
-	/* FILL ME */
+	uint32_t m1[4] = {0};
+	uint32_t m2[4] = {0};
+	find_exp_mess(m1, m2);
 }
