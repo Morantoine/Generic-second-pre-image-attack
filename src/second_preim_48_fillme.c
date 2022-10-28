@@ -17,12 +17,10 @@
 #define ROTL24_8(x) ((((x) << 8) ^ ((x) >> 16)) & 0xFFFFFF)
 #define ROTL24_21(x) ((((x) << 21) ^ ((x) >> 3)) & 0xFFFFFF)
 
-#define IV 0x010203040506ULL
 // N = sqrt(2^48) = 2^24 car on veut une collision sur 48 bits.
 // Avec le paradoxe des anniversaires, on peut faire une attaque "meet on the middle search"
 // et avoir 1 chance sur 2 de trouver une collision avec sqrt(nombre de possibilitées)
 /*#define N 16777216*/
-#define N 16777216
 #define N 16777216
 
 unsigned long long boucles = 0;
@@ -161,7 +159,13 @@ static int compar(const void* a, const void* b) {
 	return ((KeyMessage*)a)->hash > ((KeyMessage*)b)->hash;
 }
 
+/*
+ * Dichotomy in O(log n)
+ */
 int64_t find(uint64_t elem, KeyMessage tab[]) {
+	// On peut améliorer l'algorithme avec une "interpolation search" qui est en O(log(log(N)))
+	// Puisque les éléments sont réparties avec une loi uniforme. On pourrait statistiquement 
+	// chercher la position de l'élément et gagner du temps.
     int left_index = 0, right_index = N - 1;
     int index;
     while (left_index < right_index) {
@@ -190,10 +194,11 @@ uint64_t major(uint64_t a, uint64_t majorant) {
 	}
 }
 
+/*
 int64_t find_opti(uint64_t elem, KeyMessage tab[]) {
 	uint64_t mean = elem / N;
-	/*printf("%lu ===== %lu ====== %lu\n", elem, tab[mean].hash, mean);*/
-    /*uint64_t left_index = positive(mean - N / 4) , right_index = major(mean + N / 4, N - 1);*/
+	//printf("%lu ===== %lu ====== %lu\n", elem, tab[mean].hash, mean);
+    //uint64_t left_index = positive(mean - N / 4) , right_index = major(mean + N / 4, N - 1);
     uint64_t left_index = 0 , right_index = N - 1;
     uint64_t index;
     while (left_index < right_index) {
@@ -209,6 +214,7 @@ int64_t find_opti(uint64_t elem, KeyMessage tab[]) {
     }
     return -1;
 }
+*/
 
 
 
@@ -217,7 +223,11 @@ int64_t find_opti(uint64_t elem, KeyMessage tab[]) {
  * where hs48_nopad is hs48 with no padding */
 void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
 {
+	clock_t start_of_all = clock();
 	KeyMessage* tab_m1;
+	// On alloue car créer un tableau de 16 millions d'éléments faisait un segfault.
+	// On choisit un tableau mais on aurait pu faire une table de hashage.
+	// Les performances sont correctes, donc on est resté sur cette solution.
 	printf("___________Allocation_________\n");
 	if (!(tab_m1 = malloc(N * sizeof(KeyMessage)))) {
 		fprintf(stderr, "Error: calloc");
@@ -269,8 +279,19 @@ void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
 	uint64_t collision = get_cs48_dm_fp(elem);
 	printf("%lu en %u itérations\n", collision, i);
 	printf("%lu à la position %ld \n", tab_m1[find(collision, tab_m1)].hash, find(collision, tab_m1));
-	printf("Nombre de boucles moyen = %llu \n", boucles / i);
+	printf("Nombre de boucles moyen = %lf \n", boucles / (double)i);
 	printf("%f s\n", (clock() - start) / (double)CLOCKS_PER_SEC);
+	printf("%f s en tout\n", (clock() - start_of_all) / (double)CLOCKS_PER_SEC);
+
+	m2[0] = elem[0];
+	m2[1] = elem[1];
+	m2[2] = elem[2];
+	m2[3] = elem[3];
+
+	m1[0] = tab_m1[find(collision, tab_m1)].message[0];
+	m1[1] = tab_m1[find(collision, tab_m1)].message[1];
+	m1[2] = tab_m1[find(collision, tab_m1)].message[2];
+	m1[3] = tab_m1[find(collision, tab_m1)].message[3];
 
 	free(tab_m1);
 }

@@ -125,19 +125,18 @@ int test_fixed_point(void) {
 }
 
 int test_em(void) {
-	/*
+	uint32_t m1[4];
+	uint32_t m2[4];
+	find_exp_mess(m1, m2);
 	if (cs48_dm(m1, IV) == get_cs48_dm_fp(m2)) {
-
 		ok_test();
 		printf(__func__);
+		return EXIT_SUCCESS;
 	} else {
-
+		failed_test();
+		printf(__func__);
+		return EXIT_FAILURE;
 	}
-	*/
-	failed_test();
-	printf(__func__);
-	printf("\nnot yet implemented\n");
-	return EXIT_FAILURE;
 }
 
 
@@ -146,6 +145,7 @@ int main () {
 	test_sp48_inv();
 	test_cs48_dm();
 	test_fixed_point();
+	test_em();
 
 	printf("\n");
 	return 0;
