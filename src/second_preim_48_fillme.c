@@ -221,14 +221,14 @@ int64_t find_opti(uint64_t elem, KeyMessage tab[]) {
 /* Finds a two-block expandable message for hs48, using a fixed-point
  * That is, computes m1, m2 s.t. hs48_nopad(m1||m2) = hs48_nopad(m1||m2^*),
  * where hs48_nopad is hs48 with no padding */
-void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
-{
+void find_exp_mess(uint32_t m1[4], uint32_t m2[4]) {
+	printf("\nfind_exp_mess:\n");
 	clock_t start_of_all = clock();
 	KeyMessage* tab_m1;
 	// On alloue car créer un tableau de 16 millions d'éléments faisait un segfault.
 	// On choisit un tableau mais on aurait pu faire une table de hashage.
 	// Les performances sont correctes, donc on est resté sur cette solution.
-	printf("___________Allocation_________\n");
+	printf("_____________Allocation___________\n");
 	if (!(tab_m1 = malloc(N * sizeof(KeyMessage)))) {
 		fprintf(stderr, "Error: calloc");
 		return;
@@ -237,7 +237,7 @@ void find_exp_mess(uint32_t m1[4], uint32_t m2[4])
 	uint32_t m1_32_tmp[4];
 	// compute N possible chaining values for N random first-block messages m1
 	uint32_t i;
-	printf("___________On calcule 2^24 hashes_________\n");
+	printf("____________On calcule 2^24 hashes__________\n");
 	for (i = 0; i < N; i++) {
 		m1_64_tmp[0] = xoshiro256starstar_random();
 		m1_64_tmp[1] = xoshiro256starstar_random();

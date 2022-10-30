@@ -19,7 +19,7 @@ attack : ;./$(EXEC_ATTACK)
 gprof : clean_attack
 gprof : FLAGS += -pg
 gprof : $(EXEC_ATTACK)
-gprof : ./$(EXEC_ATTACK)
+gprof : ;./$(EXEC_ATTACK)
 
 $(EXEC_ATTACK) :
 	gcc $(FLAGS) -o $(EXEC_ATTACK) src/attack.c src/second_preim_48_fillme.c
