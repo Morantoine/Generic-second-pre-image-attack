@@ -28,6 +28,7 @@ unsigned long long boucles = 0;
 typedef struct key_message {
 	uint64_t hash;
 	uint32_t message[4];
+	int index;
 }KeyMessage;
 
 /*
@@ -164,11 +165,11 @@ static int compar(const void* a, const void* b) {
 /*
  * Dichotomy in O(log n)
  */
-int64_t find(uint64_t elem, KeyMessage tab[]) {
+int64_t find(uint64_t elem, KeyMessage tab[], uint64_t len) {
 	// On peut améliorer l'algorithme avec une "interpolation search" qui est en O(log(log(N)))
-	// Puisque les éléments sont réparties avec une loi uniforme. On pourrait statistiquement 
+	// Puisque les éléments sont répartis avec une loi uniforme. On pourrait statistiquement 
 	// chercher la position de l'élément et gagner du temps.
-    int left_index = 0, right_index = N - 1;
+    int left_index = 0, right_index = len - 1;
     int index;
     while (left_index < right_index) {
 		boucles++;
@@ -277,10 +278,10 @@ void find_exp_mess(uint32_t m1[4], uint32_t m2[4]) {
 		elem[3] = elem64[1] & 0xffffffff00000000;
 		i++;
 		/*printf("%lu en %u itérations\n", elem, i);*/
-	} while (find(get_cs48_dm_fp(elem), tab_m1) == -1);
+	} while (find(get_cs48_dm_fp(elem), tab_m1, N) == -1);
 	uint64_t collision = get_cs48_dm_fp(elem);
 	printf("%lu en %u itérations\n", collision, i);
-	printf("%lu à la position %ld \n", tab_m1[find(collision, tab_m1)].hash, find(collision, tab_m1));
+	printf("%lu à la position %ld \n", tab_m1[find(collision, tab_m1, N)].hash, find(collision, tab_m1, N));
 	printf("Nombre de boucles moyen = %lf \n", boucles / (double)i);
 	printf("%f s\n", (clock() - start) / (double)CLOCKS_PER_SEC);
 	printf("%f s en tout\n", (clock() - start_of_all) / (double)CLOCKS_PER_SEC);
@@ -290,10 +291,10 @@ void find_exp_mess(uint32_t m1[4], uint32_t m2[4]) {
 	m2[2] = elem[2];
 	m2[3] = elem[3];
 
-	m1[0] = tab_m1[find(collision, tab_m1)].message[0];
-	m1[1] = tab_m1[find(collision, tab_m1)].message[1];
-	m1[2] = tab_m1[find(collision, tab_m1)].message[2];
-	m1[3] = tab_m1[find(collision, tab_m1)].message[3];
+	m1[0] = tab_m1[find(collision, tab_m1, N)].message[0];
+	m1[1] = tab_m1[find(collision, tab_m1, N)].message[1];
+	m1[2] = tab_m1[find(collision, tab_m1, N)].message[2];
+	m1[3] = tab_m1[find(collision, tab_m1, N)].message[3];
 
 	free(tab_m1);
 }
@@ -312,15 +313,45 @@ void attack(void)
         mess[i + 3] = 0;
     }
     uint64_t hash = hs48(mess, NUM_BLOCKS, 1, 1);
-	printf("%lx\n", hash);
     assert(hash == 0x7CA651E182DBULL);
-	uint32_t m1[4] = {0};
-	uint32_t m2[4] = {0};
 	// Compute the chaining hashes of the message and store them in a sorted array
-	//find_exp_mess(m1, m2);
-	//printf("_____________Allocation___________\n");
-	//if (!(tab_m1 = malloc(N * sizeof(KeyMessage)))) {
-	//	fprintf(stderr, "Error: calloc");
-	//	return;
-	//}
+	printf("_____________Allocation___________\n");
+	KeyMessage* tab_original_msg;
+	if (!(tab_original_msg = malloc(NUM_BLOCKS * sizeof(KeyMessage)))) {
+		fprintf(stderr, "Error: calloc");
+		return;
+	}
+	// We compute and store all the hashes of the blocks
+	tab_original_msg[0].hash = cs48_dm(mess, IV);
+	tab_original_msg[0].message[0] = mess[0];
+	tab_original_msg[0].message[1] = mess[1];
+	tab_original_msg[0].message[2] = mess[2];
+	tab_original_msg[0].message[3] = mess[3];
+	tab_original_msg[0].index = 0;
+	for (int i = 1; i < NUM_BLOCKS; i++) {
+		// saved in a hash-map
+		tab_original_msg[i].hash = cs48_dm(mess + 4* i, tab_original_msg[i - 1].hash);
+		tab_original_msg[i].message[0] = mess[4*i + 0];
+		tab_original_msg[i].message[1] = mess[4*i + 1];
+		tab_original_msg[i].message[2] = mess[4*i + 2];
+		tab_original_msg[i].message[3] = mess[4*i + 3];
+		tab_original_msg[i].index = i;
+	}
+	printf("%lx\n", tab_original_msg[0].hash);
+	printf("%lx\n", tab_original_msg[1].hash);
+	printf("%lx\n", tab_original_msg[2].hash);
+	printf("%lx\n", tab_original_msg[3].hash);
+	// We now sort the hashmap to find a collision
+	printf("\n____Sorting intemediate hashes____\n");
+	qsort(tab_original_msg, NUM_BLOCKS, sizeof(KeyMessage), compar);
+	// Generate random colliding block until we find a collision in any hash
+	uint32_t m1[4];
+	uint32_t m2[4];
+	uint64_t colliding_block;
+	do {
+		printf("Trying to find a block!");
+		find_exp_mess(m1, m2);
+		colliding_block = cs48_dm(m1, IV);
+		/*printf("%lu en %u itérations\n", elem, i);*/
+	} while (find(colliding_block, tab_original_msg, NUM_BLOCKS) == -1); 
 }
