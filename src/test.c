@@ -88,7 +88,7 @@ int test_sp48_inv(void){
 int test_cs48_dm(void) {
 	uint64_t h = 0x010203040506ULL;
 	uint32_t m[4] = {
-		3, 2, 1, 0
+		0, 1, 2, 3
 	};
 
 	uint64_t compression= cs48_dm(m, h);
@@ -138,7 +138,6 @@ int test_em(void) {
 		return EXIT_FAILURE;
 	}
 }
-
 
 int main () {
 	test_sp48();

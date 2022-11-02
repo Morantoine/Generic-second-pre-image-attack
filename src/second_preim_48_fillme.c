@@ -106,9 +106,10 @@ void speck48_96_inv(const uint32_t k[4], const uint32_t c[2], uint32_t p[2])
  */
 uint64_t cs48_dm(const uint32_t m[4], const uint64_t h)
 {
+	uint32_t m1[4] = {m[3], m[2], m[1], m[0]};
 	uint32_t hashed_tab[2] = {0};
 	uint32_t h_tab[2] = {h & 0xFFFFFF, h >> 24 & 0xFFFFFF};
-	speck48_96(m, h_tab, hashed_tab);		
+	speck48_96(m1, h_tab, hashed_tab);		
 	uint64_t hashed = ((uint64_t) hashed_tab[1]) << 24 | (uint64_t) hashed_tab[0];
 	return hashed ^ h;
 }
@@ -146,11 +147,12 @@ uint64_t hs48(const uint32_t *m, uint64_t fourlen, int padding, int verbose)
 /* Computes the unique fixed-point for cs48_dm for the message m */
 uint64_t get_cs48_dm_fp(uint32_t m[4])
 {
+	uint32_t m1[4] = {m[3], m[2], m[1], m[0]}; 
 	// We just need to compute the preimage of 0 by the block cypher
 	uint32_t c[2] = {0};
 	uint32_t p[2];
 
-	speck48_96_inv(m, c, p);
+	speck48_96_inv(m1, c, p);
 	uint64_t formatted_result = ((uint64_t) p[1]) << 24 | (uint64_t) p[0];
 	return formatted_result;
 }
@@ -300,7 +302,25 @@ void find_exp_mess(uint32_t m1[4], uint32_t m2[4]) {
 
 void attack(void)
 {
+	// Message for which we want to find a second preimage
+	const uint64_t NUM_BLOCKS = 1 << 18;
+    uint32_t mess[4 * NUM_BLOCKS];
+    for (int i = 0; i < (1 << 20); i += 4) {
+        mess[i + 0] = i;
+        mess[i + 1] = 0;
+        mess[i + 2] = 0;
+        mess[i + 3] = 0;
+    }
+    uint64_t hash = hs48(mess, NUM_BLOCKS, 1, 1);
+	printf("%lx\n", hash);
+    assert(hash == 0x7CA651E182DBULL);
 	uint32_t m1[4] = {0};
 	uint32_t m2[4] = {0};
-	find_exp_mess(m1, m2);
+	// Compute the chaining hashes of the message and store them in a sorted array
+	//find_exp_mess(m1, m2);
+	//printf("_____________Allocation___________\n");
+	//if (!(tab_m1 = malloc(N * sizeof(KeyMessage)))) {
+	//	fprintf(stderr, "Error: calloc");
+	//	return;
+	//}
 }
