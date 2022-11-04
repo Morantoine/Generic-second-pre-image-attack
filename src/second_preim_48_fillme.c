@@ -337,21 +337,66 @@ void attack(void)
 		tab_original_msg[i].message[3] = mess[4*i + 3];
 		tab_original_msg[i].index = i;
 	}
-	printf("%lx\n", tab_original_msg[0].hash);
-	printf("%lx\n", tab_original_msg[1].hash);
-	printf("%lx\n", tab_original_msg[2].hash);
-	printf("%lx\n", tab_original_msg[3].hash);
 	// We now sort the hashmap to find a collision
 	printf("\n____Sorting intemediate hashes____\n");
 	qsort(tab_original_msg, NUM_BLOCKS, sizeof(KeyMessage), compar);
-	// Generate random colliding block until we find a collision in any hash
+	// Generate one pair on messages
+	// corresponding to an expandable messag
 	uint32_t m1[4];
 	uint32_t m2[4];
-	uint64_t colliding_block;
+	uint32_t cm[4];
+	uint64_t fixed_point;
+	uint64_t h;
+	uint64_t cmbuffer[2];
+	find_exp_mess(m1, m2);
+	fixed_point = cs48_dm(m1, IV);
+	// Randomly generate cm until we collide on any intermediate hash
+	u_int64_t i = 0;
 	do {
-		printf("Trying to find a block!");
-		find_exp_mess(m1, m2);
-		colliding_block = cs48_dm(m1, IV);
-		/*printf("%lu en %u itérations\n", elem, i);*/
-	} while (find(colliding_block, tab_original_msg, NUM_BLOCKS) == -1); 
+		i++;
+		if (i % 10000000 == 0) {
+			printf("%luM tries already\n", i / 1000000);
+		}
+		cmbuffer[0] = xoshiro256starstar_random();
+		cmbuffer[1] = xoshiro256starstar_random();
+		cm[0] = cmbuffer[0] & 0xffffffff;
+		cm[1] = cmbuffer[1] & 0xffffffff;
+		cm[2] = cmbuffer[0] & 0xffffffff00000000;
+		cm[3] = cmbuffer[1] & 0xffffffff00000000;
+		h = cs48_dm(cm, fixed_point);
+	} while ((find(h, tab_original_msg, NUM_BLOCKS) == -1) & 0); 
+	printf("Found colliding block in %i iterations\n", i);
+	// Then we need the index of the block we collided on
+	//int index = tab_original_msg[find(h, tab_original_msg, NUM_BLOCKS)].index;
+	int index = 20;
+	printf("Index : %u\n", index);
+	//assert(h == tab_original_msg[find(h, tab_original_msg, NUM_BLOCKS)].hash);
+	// We can now recreate the message
+    uint32_t mess2[4 * NUM_BLOCKS];
+	mess2[0] = m1[0];
+	mess2[1] = m1[1];
+	mess2[2] = m1[2];
+	mess2[3] = m1[3];
+	for (int i = 4; i < 4 * (index - 1); i += 4) {
+		printf("I : %i\n", i);
+		mess2[i + 0] = m2[0];
+		mess2[i + 1] = m2[1];
+		mess2[i + 2] = m2[2];
+		mess2[i + 3] = m2[3];
+	}
+	printf("Done\n");
+	/*
+	for (int j = 0; j < 4; j++) {
+		printf("J : %i\n", j);
+		mess2[4 * index + j] = cm[j];
+	}
+	for (int i = 4 * (index + 1); i < (1 << 20); i += 4) {
+		mess2[i + 0] = i;
+		mess2[i + 1] = 0;
+		mess2[i + 2] = 0;
+		mess2[i + 3] = 0;
+	}
+	*/	
+	//printf("Hash for the second preimage is %lx", hs48(mess2, NUM_BLOCKS, 1, 1));
+	//printf("Original hash was %lx\n", hash);
 }
