@@ -351,11 +351,11 @@ void attack(void)
 	find_exp_mess(m1, m2);
 	fixed_point = cs48_dm(m1, IV);
 	// Randomly generate cm until we collide on any intermediate hash
-	u_int64_t i = 0;
+	int i = 0;
 	do {
 		i++;
 		if (i % 10000000 == 0) {
-			printf("%luM tries already\n", i / 1000000);
+			printf("%iM tries already\n", i / 1000000);
 		}
 		cmbuffer[0] = xoshiro256starstar_random();
 		cmbuffer[1] = xoshiro256starstar_random();
@@ -364,31 +364,28 @@ void attack(void)
 		cm[2] = cmbuffer[0] & 0xffffffff00000000;
 		cm[3] = cmbuffer[1] & 0xffffffff00000000;
 		h = cs48_dm(cm, fixed_point);
-	} while ((find(h, tab_original_msg, NUM_BLOCKS) == -1) & 0); 
+	} while ((find(h, tab_original_msg, NUM_BLOCKS) == -1)); 
 	printf("Found colliding block in %i iterations\n", i);
 	// Then we need the index of the block we collided on
-	//int index = tab_original_msg[find(h, tab_original_msg, NUM_BLOCKS)].index;
-	int index = 20;
+	int index = tab_original_msg[find(h, tab_original_msg, NUM_BLOCKS)].index;
 	printf("Index : %u\n", index);
-	//assert(h == tab_original_msg[find(h, tab_original_msg, NUM_BLOCKS)].hash);
+	assert(h == tab_original_msg[find(h, tab_original_msg, NUM_BLOCKS)].hash);
 	// We can now recreate the message
-    uint32_t mess2[4 * NUM_BLOCKS];
+    uint32_t *mess2= malloc(4 * NUM_BLOCKS * sizeof(uint32_t));
+
 	mess2[0] = m1[0];
 	mess2[1] = m1[1];
 	mess2[2] = m1[2];
 	mess2[3] = m1[3];
-	for (int i = 4; i < 4 * (index - 1); i += 4) {
+	for (int i = 4; i < 4 * index; i += 4) {
 		printf("I : %i\n", i);
 		mess2[i + 0] = m2[0];
 		mess2[i + 1] = m2[1];
 		mess2[i + 2] = m2[2];
 		mess2[i + 3] = m2[3];
 	}
-	printf("Done\n");
-	/*
 	for (int j = 0; j < 4; j++) {
-		printf("J : %i\n", j);
-		mess2[4 * index + j] = cm[j];
+		mess2[4 * index+ j] = cm[j];
 	}
 	for (int i = 4 * (index + 1); i < (1 << 20); i += 4) {
 		mess2[i + 0] = i;
@@ -396,7 +393,7 @@ void attack(void)
 		mess2[i + 2] = 0;
 		mess2[i + 3] = 0;
 	}
-	*/	
-	//printf("Hash for the second preimage is %lx", hs48(mess2, NUM_BLOCKS, 1, 1));
-	//printf("Original hash was %lx\n", hash);
+	printf("Done\n");
+	printf("Hash for the second preimage is %lx\n", hs48(mess2, NUM_BLOCKS, 1, 0));
+	printf("Original hash was %lx\n", hash);
 }
