@@ -16,6 +16,11 @@ attack : FLAGS += -O3 -march=native
 attack : $(EXEC_ATTACK)
 attack : ;./$(EXEC_ATTACK)
 
+attack_verbose : clean_attack
+attack_verbose : FLAGS += -O3 -march=native 
+attack_verbose : $(EXEC_ATTACK)
+attack_verbose : ;./$(EXEC_ATTACK) -v
+
 gprof : clean_attack
 gprof : FLAGS += -pg
 gprof : $(EXEC_ATTACK)
