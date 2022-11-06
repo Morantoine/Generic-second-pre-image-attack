@@ -219,11 +219,6 @@ int64_t find_opti(uint64_t elem, KeyMessage tab[]) {
 */
 
 
-
-int pthread_create(pthread_t *restrict tidp, const pthread_attr_t *restrict attr, void *(*start_rtn)(void), void *restrict arg) {
-	
-}
-
 /* Finds a two-block expandable message for hs48, using a fixed-point
  * That is, computes m1, m2 s.t. hs48_nopad(m1||m2) = hs48_nopad(m1||m2^*),
  * where hs48_nopad is hs48 with no padding */
