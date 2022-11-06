@@ -7,6 +7,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "../include/second_preim_48_fillme.h"
 #include "../include/xoshiro256starstar.h"
@@ -402,4 +404,37 @@ void attack(int verbose)
 	printf("Hash for the second preimage is %lx\n", hs48(mess2, NUM_BLOCKS, 1, 0));
 	printf("Original hash was %lx\n", hash);
 	printf("Attack succeeded !");
+
+	int saved_stdout;
+	saved_stdout = dup(1);
+	char *name = "second_message_verbose.txt";
+    int fd = open(name, O_WRONLY | O_CREAT, 0644);
+    if (fd == -1) {
+        perror("open failed");
+        exit(1);
+    }
+
+    if (dup2(fd, 1) == -1) {
+        perror("dup2 failed"); 
+        exit(1);
+    }
+
+	hs48(mess2, NUM_BLOCKS, 1, 1);
+
+	name = "original_message_verbose.txt";
+    fd = open(name, O_WRONLY | O_CREAT, 0644);
+    if (fd == -1) {
+        perror("open failed");
+        exit(1);
+    }
+
+    if (dup2(fd, 1) == -1) {
+        perror("dup2 failed"); 
+        exit(1);
+    }
+
+	hs48(mess, NUM_BLOCKS, 1, 1);
+	/* Restore stdout */
+	dup2(saved_stdout, 1);
+	close(saved_stdout);
 }
