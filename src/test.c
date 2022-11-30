@@ -127,7 +127,8 @@ int test_fixed_point(void) {
 int test_em(void) {
 	uint32_t m1[4];
 	uint32_t m2[4];
-	find_exp_mess(m1, m2);
+	printf("\n");
+	find_exp_mess(m1, m2, 1);
 	if (cs48_dm(m1, IV) == get_cs48_dm_fp(m2)) {
 		ok_test();
 		printf(__func__);
